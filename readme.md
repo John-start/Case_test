@@ -11,9 +11,9 @@
 
 ## 效果展示
 
-![image-20250411165556831](D:/MyBlog/GiteeBlog/source/images/image-20250411165556831.png)
+![image-20250411165556831](picture/image-20250411165556831.png)
 
-![image-20250411165624518](D:/MyBlog/GiteeBlog/source/images/image-20250411165624518.png)
+![image-20250411165624518](picture/image-20250411165624518.png)
 
 
 ## 技术特点
