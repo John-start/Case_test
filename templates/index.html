@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛汝生产优化算例测试系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.1/dist/echarts.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; background: #ffffff; margin: 0; padding: 0; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: #cdcdcd; color: #555555; padding-top: 20px; position: fixed; height: 100%; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); }
+        .sidebar h2 { color: #0d0d0d; text-align: center; font-size: 24px; }
+        .sidebar ul { padding: 0; list-style: none; margin-top: 30px; }
+        .sidebar ul li { padding: 15px; text-align: center; cursor: pointer; border-bottom: 1px solid #fff; }
+        .sidebar ul li:hover { background: #a3d39d; }
+        .sidebar ul li a { text-decoration: none; color: inherit; display: block; }
+        .sidebar ul li.active { background: #a3d39d; }
+        .main-content { margin-left: 250px; padding: 20px; color: #333; flex-grow: 1; }
+        .container { background: #f7f7f7; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        h1, h2 { text-align: center; color: #0d0d0d; }
+        button { padding: 10px 20px; margin: 10px; background: #a3d39c; color: white; border: none; cursor: pointer; border-radius: 5px; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #88c37b; transform: scale(1.1); }
+        .progress-bar { width: 100%; height: 20px; background: #f1f1f1; margin: 20px 0; border-radius: 10px; }
+        .progress { height: 100%; background: #a3d39d; width: 0%; border-radius: 10px; transition: width 0.5s; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #ffffff; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background: #a3d39d; color: white; }
+        .card { background: #f2f2f2; padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); }
+        .card h3 { color: #a3d39d; }
+        .card p { color: #555; }
+        #chart { width: 100%; height: 400px; margin-top: 20px; }
+        #footer {bottom: 0;width: 100%;text-align: center;background-color: #f1f1f1;padding: 10px;font-size: 14px;color: #333;}
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>系统导航</h2>
+        <ul>
+            <li class="active"><a href="/">首页</a></li>
+            <li><a href="/test">算例测试</a></li>
+            <li><a href="/results">测试结果</a></li>
+            <li><a href="/analysis">数据分析</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="container">
+            <h1>赛汝生产优化算例测试系统</h1>
+            <button id="startTest">开始测试</button>
+            <div class="progress-bar"><div id="progress" class="progress"></div></div>
+            
+            <h2>测试结果</h2>
+            <div class="card">
+                <h3>运行数据概览</h3>
+                <p>此处显示最新的测试结果，如任务ID、规模、运行时间、准确率等。</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr><th>任务ID</th><th>规模</th><th>运行时间 (s)</th><th>准确率 (%)</th><th>效率 (%)</th><th>资源使用 (%)</th></tr>
+                </thead>
+                <tbody id="resultTable"></tbody>
+            </table>
+            
+            <h2>测试趋势</h2>
+            <div id="chart"></div>
+            <div id="footer"><p>&copy; 2025加油！成果多多！——TUUG</p></div>
+        </div>
+
+    </div>
+
+    <script>
+        $("#startTest").click(function() {
+            $.get("/start_tests", function() { alert("算例测试已启动！"); });
+        });
+        
+        function fetchResults() {
+            $.get("/get_results", function(data) {
+                $("#progress").css("width", data.progress + "%");
+                $("#resultTable").empty();
+                // Sort the results by case_id
+                data.results.sort((a, b) => parseInt(a.case_id) - parseInt(b.case_id));
+                let labels = [], times = [], accuracies = [], efficiencies = [], usages = [];
+                data.results.forEach(item => {
+                    $("#resultTable").append(
+                        `<tr><td>${item.case_id}</td><td>${item.size}</td><td>${item.time}</td><td>${item.accuracy}</td><td>${item.efficiency}</td><td>${item.resource_usage}</td></tr>`
+                    );
+                    labels.push("任务 " + item.case_id);
+                    times.push(item.time);
+                    accuracies.push(item.accuracy);
+                    efficiencies.push(item.efficiency);
+                    usages.push(item.resource_usage);
+                });
+                updateChart(labels, times, accuracies, efficiencies, usages);
+            });
+        }
+        
+        function updateChart(labels, times, accuracies, efficiencies, usages) {
+            let chartDom = document.getElementById("chart");
+            let myChart = echarts.init(chartDom);
+            let option = {
+                backgroundColor: '#ffffff',
+                title: { text: "算例运行趋势", textStyle: { color: '#a3d39d' } },
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['运行时间', '准确率', '效率', '资源使用'], textStyle: { color: '#a3d39d' } },
+                xAxis: { type: "category", data: labels, axisLine: { lineStyle: { color: '#a3d39d' } } },
+                yAxis: { type: "value", axisLine: { lineStyle: { color: '#a3d39d' } } },
+                series: [
+                    { name: '运行时间', type: 'line', data: times, smooth: true, lineStyle: { color: '#a3d39d' } },
+                    { name: '准确率', type: 'line', data: accuracies, smooth: true, lineStyle: { color: '#2ecc71' } },
+                    { name: '效率', type: 'line', data: efficiencies, smooth: true, lineStyle: { color: '#1abc9c' } },
+                    { name: '资源使用', type: 'line', data: usages, smooth: true, lineStyle: { color: '#e74c3c' } }
+                ]
+            };
+            myChart.setOption(option);
+        }
+        
+        setInterval(fetchResults, 2000);
+    </script>
+</body>
+</html>
